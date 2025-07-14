@@ -1,12 +1,44 @@
-# KeystoneAuthMechanisms
+# Securing Cloud and IoT Identity: An Analysis of Keystone Authentication Mechanisms in OpenStack
 
+
+This project demonstrates how to configure and test **Keystone Identity Service** on a local Ubuntu system. It covers key authentication methods:  
+🔐 Password, 🔁 TOTP (MFA), ☁️ OAuth, and 🔑 Application Credentials.
+
+---
+
+## 📘 Table of Contents
+
+- [Overview](#overview)  
+- [Installation & Setup](#installation--setup)  
+- [Authentication Methods](#authentication-methods)  
+  - [Password Auth](#1-password-authentication)  
+  - [TOTP / MFA](#2-totp-authentication)  
+  - [OAuth](#3-oauth-authentication)  
+  - [App Credentials](#4-application-credentials-authentication)  
+- [Token Decryption](#token-decryption)  
+- [Scripts](#scripts)  
+- [Disclaimer](#disclaimer)
+
+---
+
+## 📌 Overview
+
+Keystone is the identity service for OpenStack. This demo is intended for **testing and educational purposes** and includes:
+
+- Full local setup (Ubuntu 24.04 LTS)  
+- Keystone database configuration  
+- Token management (Fernet)  
+- Multi-auth support: Password, TOTP, OAuth, and Federated/App-based login  
+- Token decoder script
+
+---
 
 
 
 
 #  Keystone OpenStack Demo Setup
 
-This guide demonstrates how to install and configure the **Keystone Identity Service** on a local Ubuntu system.  
+This section demonstrates how to install and configure the **Keystone Identity Service** on a local Ubuntu system.  
 Keystone provides **authentication and authorization** services for OpenStack components.
 
 >  **Note**: This setup is for learning/demo purposes only. Do not use it in a production environment.
