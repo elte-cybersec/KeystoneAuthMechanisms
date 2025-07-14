@@ -1,58 +1,42 @@
 # Securing Cloud and IoT Identity: An Analysis of Keystone Authentication Mechanisms in OpenStack
 
 
-This project demonstrates how to configure and test **Keystone Identity Service** on a local Ubuntu system. It covers key authentication methods:  
-🔐 Password, 🔁 TOTP (MFA), ☁️ OAuth, and 🔑 Application Credentials.
+This repository demonstrates how to install and configure the **Keystone Identity Service** on a local Ubuntu system, and test multiple supported authentication mechanisms.
+
+> ⚠️ This setup is for research and analysis purposes only. Do not use it in a production environment.
 
 ---
 
-## 📘 Table of Contents
+## 📚 Table of Contents
 
-- [Overview](#overview)  
-- [Installation & Setup](#installation--setup)  
-- [Authentication Methods](#authentication-methods)  
-  - [Password Auth](#1-password-authentication)  
-  - [TOTP / MFA](#2-totp-authentication)  
-  - [OAuth](#3-oauth-authentication)  
-  - [App Credentials](#4-application-credentials-authentication)  
-- [Token Decryption](#token-decryption)  
-- [Scripts](#scripts)  
+- [Keystone Demo Setup](#keystone-demo-setup)
+  - [Prerequisites](#prerequisites)
+  - [Step-by-Step Installation](#step-by-step-installation)
+- [Authentication Mechanisms](#authentication-mechanisms)
+  - [Password Authentication](#password-authentication)
+  - [TOTP Authentication](#totp-authentication)
+  - [OAuth Authentication](#oauth-authentication)
+  - [Application Credentials Authentication](#application-credentials-authentication)
+- [Token Decrypter](#token-decrypter)
+- [Scripts](#scripts)
 - [Disclaimer](#disclaimer)
 
 ---
 
-## 📌 Overview
+## 🔧 Keystone Demo Setup
 
-Keystone is the identity service for OpenStack. This demo is intended for **testing and educational purposes** and includes:
+This section demonstrates how to install and configure the **Keystone Identity Service** locally on Ubuntu.
 
-- Full local setup (Ubuntu 24.04 LTS)  
-- Keystone database configuration  
-- Token management (Fernet)  
-- Multi-auth support: Password, TOTP, OAuth, and Federated/App-based login  
-- Token decoder script
-
----
-
-
-
-
-#  Keystone OpenStack Demo Setup
-
-This section demonstrates how to install and configure the **Keystone Identity Service** on a local Ubuntu system.  
-Keystone provides **authentication and authorization** services for OpenStack components.
-
->  **Note**: This setup is for learning/demo purposes only. Do not use it in a production environment.
-
----
-
-##  Prerequisites
+### Prerequisites
 
 - A clean Ubuntu installation (Ubuntu 24.04.2 LTS)
 - Root or sudo access
 
 ---
 
-##  Step 1: System Update & Required Package Installation
+### Step-by-Step Installation
+
+#### Step 1: System Update & Required Package Installation
 
 ```bash
 sudo apt-get update
@@ -61,31 +45,36 @@ sudo apt-get update
 sudo apt install keystone apache2 libapache2-mod-wsgi-py3 -y
 sudo apt install python3-openstackclient -y
 ```
-##  Step 2: Install and Configure the Database (MariaDB)
+
+#### Step 2: Install and Configure the Database (MariaDB)
+
 ```bash
 sudo apt install mariadb-server python3-pymysql -y
 sudo mysql_secure_installation
 sudo mysql
 ```
 
-Inside MySQL, create the Keystone database:
-```bash
+Inside MySQL:
+
+```sql
 CREATE DATABASE keystone;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'passhere';
 FLUSH PRIVILEGES;
 EXIT;
 ```
+
 Replace `passhere` with your secure Keystone DB password.
 
+---
 
-## Step 3: Configure Keystone
-Edit the Keystone configuration file "You can see the uploaded `keystone.conf` for further details":
+#### Step 3: Configure Keystone
+
+Edit the Keystone configuration file:
 
 ```bash
-
 sudo nano /etc/keystone/keystone.conf
-
 ```
+
 Update the following sections:
 
 ```ini
@@ -95,15 +84,12 @@ connection = mysql+pymysql://keystone:passhere@localhost/keystone
 [token]
 provider = fernet
 ```
-Replace `passhere` with your secure Keystone DB password.
 
+---
 
-## Step 4: Database Sync and Token Initialization
-
-
+#### Step 4: Database Sync and Token Initialization
 
 ```bash
-
 sudo keystone-manage db_sync
 
 # Initialize Fernet token system
@@ -116,16 +102,22 @@ sudo keystone-manage bootstrap --bootstrap-password ADMIN_PASS \
   --bootstrap-internal-url http://localhost:5000/v3/ \
   --bootstrap-public-url http://localhost:5000/v3/ \
   --bootstrap-region-id RegionOne
-
 ```
 
 Replace `ADMIN_PASS` with a strong password for the admin user.
 
-## Step 5: Restart Apache2
+---
+
+#### Step 5: Restart Apache2
+
 ```bash
 sudo service apache2 restart
 ```
-## Step 6: Set Environment Variables
+
+---
+
+#### Step 6: Set Environment Variables
+
 ```bash
 export OS_USERNAME=admin
 export OS_PASSWORD=ADMIN_PASS
@@ -135,32 +127,31 @@ export OS_PROJECT_DOMAIN_NAME=Default
 export OS_AUTH_URL=http://localhost:5000/v3
 export OS_IDENTITY_API_VERSION=3
 ```
-You can also save these in a file like `keystonerc` and use `source keystonerc` to load them quickly.
 
-## Step 7: Verify Keystone is Working
+You can also save these in a file like `keystonerc` and use `source keystonerc`.
+
+---
+
+#### Step 7: Verify Keystone is Working
+
 ```bash
 openstack project list
 ```
 
+#### Running Keystone and Authentication Test
 
-### Running keystone and Authentication test
 ```bash
 sudo keystone-wsgi-public
 ```
 
-In another terminal you can test authenticating the admin or use the `openstack` CLI to create new Domains/Projects/Group/Users/Credentials and more.
-See the uploaded curls for further details.
-
-
-
+In another terminal, test authenticating the admin or use the `openstack` CLI to create new Domains, Projects, Groups, Users, Credentials, and more.  
+See the uploaded `curls` for further examples.
 
 ---
 
-# Password Authentication Mechanism
+## 🔐 Authentication Mechanisms
 
-## Create a New OpenStack User and Assign Role
-
-You can create a new user in OpenStack and assign them a role in a specific project using the `openstack` CLI.
+### Password Authentication
 
 ```bash
 # Create a new user under the 'admin' project and 'default' domain
@@ -169,57 +160,60 @@ openstack user create --domain default --project admin --password "<USER_PASSWOR
 # Assign the 'admin' role to the user within the 'admin' project
 openstack role add --project admin --user <USERNAME> admin
 ```
-> For test you can use the provided CurlPass script
 
-# TOTP Authentication Mechanism
+> For testing, use the provided `CurlPass` script.
 
-Keystone supports TOTP for Multi-Factor Authentication (MFA). This section demonstrates how to generate a TOTP secret, register it in OpenStack, and generate OTPs.
+---
 
-### Step 1: Generate a TOTP Secret and Register It
+### TOTP Authentication
+
+Keystone supports TOTP for Multi-Factor Authentication (MFA).
+
+#### Step 1: Generate a TOTP Secret and Register It
 
 ```bash
-# Generate a 26-character TOTP secret (Base32, uppercase letters and digits 2-7)
 SECRET=$(openssl rand -base64 32 | tr -dc 'A-Z2-7' | head -c 26)
 
-# Register the TOTP credential for a user (e.g., 'admin') in a project (e.g., 'admin')
 openstack credential create --type totp --project admin admin "$SECRET"
 ```
 
-### Step 2: Generate QR Code for TOTP Setup
+#### Step 2: Generate QR Code for TOTP Setup
 
-Run the attached `qr.py` with your own `SECRET` to generate a QR image. Replace `YOUR_TOTP_SECRET` with the value of `$SECRET`. Replace `USERNAME` with the OpenStack user name. This will create a file named `totp.png` you can scan with an authenticator app.
+Run the attached `qr.py` with your own `SECRET` to generate a QR image. This will create a file named `totp.png` for scanning.
 
+#### Step 2 (Option 2): Generate TOTP Code Locally
 
-### Step 2 (Option2): Generate TOTP Code Locally
 ```python
 import pyotp
 
 print(pyotp.TOTP("YOUR_TOTP_SECRET").now())
-
 ```
-> For test you can use the provided CurlTOTP script
 
-# Oauth Authentication Mechanism
+> For testing, use the provided `CurlTOTP` script.
 
-Generate your Oauth credential using one of the available services. 
-For me I used: https://auth0.com/
+---
 
+### OAuth Authentication
 
-> For test you can use the provided CurlOauth script
+Generate your OAuth credential using a provider such as [Auth0](https://auth0.com/).
 
-# Application Credentials Authentication Mechanism
+> For testing, use the provided `CurlOauth` script.
 
-### Step 1: Create Mapping
+---
+
+### Application Credentials Authentication
+
+#### Step 1: Create Mapping
 
 Create a JSON file (`rules.json`) that defines how remote users should be mapped in Keystone.
 
 ```bash
 openstack mapping create ksmapping --rules rules.json
-
 ```
-Example content for rules.json
-```json
 
+Example content for `rules.json`:
+
+```json
 [
   {
     "local": [
@@ -244,24 +238,38 @@ Example content for rules.json
 ]
 ```
 
-### Step 2: Create Identity Provider
+#### Step 2: Create Identity Provider
 
 ```bash
 openstack identity provider create ksidp --remote-id ksidp-remote
 ```
 
-### Step 3: Create Federation Protocol
+#### Step 3: Create Federation Protocol
+
 ```bash
 openstack federation protocol create mapped --identity-provider ksidp --mapping ksmapping
 ```
 
-> For test you can use the provided CurlAppCredentials script
-
+> For testing, use the provided `CurlAppCredentials` script.
 
 ---
-# Token Decrypter
 
-> If you are curious to see what is inside the token use the /Decryptor/tokenDecryptor.py
-Be sure to put your own Fernet Key in the script 
-Mostly you can find your own keys under `/etc/keystone/fernet-keys/`
+## 🧪 Token Decrypter
+
+If you're curious to see what’s inside the Keystone token:
+
+Use `/Decryptor/tokenDecryptor.py`  
+Be sure to insert your own Fernet key into the script. You can usually find keys in:
+
+```bash
+/etc/keystone/fernet-keys/
+```
+
+---
+
+## ⚠️ Disclaimer
+
+This setup is intended for *reseach and analysis purposes only**.  
+**Do not use this configuration in production environments** without hardening and auditing.
+
 ---
