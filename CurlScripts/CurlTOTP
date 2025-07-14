@@ -1,0 +1,28 @@
+curl -i -X POST http://<KEYSTONE_HOST>:5000/v3/auth/tokens \
+-H "Content-Type: application/json" \
+-d '{
+  "auth": {
+    "identity": {
+      "methods": ["password", "totp"],
+      "password": {
+        "user": {
+          "name": "<USERNAME>",
+          "domain": { "id": "<USER_DOMAIN_ID>" },
+          "password": "<PASSWORD>"
+        }
+      },
+      "totp": {
+        "user": {
+          "id": "<USER_ID>",
+          "passcode": "<TOTP_CODE>"
+        }
+      }
+    },
+    "scope": {
+      "project": {
+        "name": "<PROJECT_NAME>",
+        "domain": { "id": "<PROJECT_DOMAIN_ID>" }
+      }
+    }
+  }
+}'
